@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bizpoll.study.mappers.memberMapper">
+	<insert id="signup">
+		INSERT INTO tbl_board_member
+		VALUES(#{id}, #{pw}, #{name}, #{phone}, #{nick}, #{email})
+	</insert>
+	
+	<select id="idChk" resultType="int" parameterType="memDTO">
+		SELECT count(*)
+		FROM tbl_board_member 
+		WHERE id=#{id}
+	</select>
+	
+	<select id="idSearch" resultType="String" parameterType="memDTO">
+		SELECT id
+		FROM tbl_board_member 
+		WHERE name=#{name}
+		AND email=#{email}
+	</select>
+	
+	<select id="pwSearch" resultType="String" parameterType="memDTO">
+		SELECT pw
+		FROM tbl_board_member 
+		WHERE id=#{id}
+		AND name=#{name}
+	</select>
+	
+	<update id="modify" parameterType="memDTO">
+		UPDATE tbl_board_member
+		SET name=#{name},
+			phone=#{phone},
+			nick=#{nick},
+			email=#{email}
+		WHERE id=#{id}
+		AND pw=#{pw}
+	</update>
+	
+	 <select id="login" resultType="memDTO" parameterType="memDTO">
+		SELECT * 
+		FROM tbl_board_member 
+		WHERE id=#{id}
+		AND pw=#{pw}
+	</select>
+	
+	<delete id="memberDel" parameterType="memDTO">
+		DELETE FROM tbl_board_member
+		WHERE id=#{id}
+		AND pw=#{pw}
+	</delete>
+	
+	<select id="pwchk " resultType="int" parameterType="memDTO">
+		SELECT count(*)
+		FROM tbl_board_member 
+		WHERE id=#{id}
+		AND pw=#{pw}
+	</select>
+	
+	<update id="pwchange" parameterType="memDTO">
+		UPDATE tbl_board_member
+		SET pw=#{pw}
+		WHERE id=#{id}
+	</update>
+</mapper>

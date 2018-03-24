@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bizpoll.study.mappers.boardMapper">
+	<insert id="create">
+		<!-- <include refid="imgChk"></include> -->
+		<!-- INSERT INTO tbl_board(bno, title, content, writer, groupNum, filename, 
+			fileContentType) VALUES(board_seq.nextval, #{title}, #{content}, #{writer}, 
+			groupNum_seq.nextval, #{filename}, #{fileContentType}) -->
+		INSERT INTO tbl_board(bno, title, content, writer, groupNum)
+		VALUES(board_seq.nextval, #{title}, #{content}, #{writer}, groupNum_seq.nextval)
+	</insert>
+	<insert id="fileupload">
+		<selectKey keyProperty="fno" resultType="int" order="BEFORE">
+			SELECT LAST_NUMBER 
+			FROM USER_SEQUENCES  
+			WHERE SEQUENCE_NAME  = 'BOARD_SEQ'
+		</selectKey>
+		INSERT INTO tbl_board_file(fno, filename, fileContentType, filesize)
+		VALUES (#{fno}-1, #{filename}, #{fileContentType}, #{filesize})
+		<!-- INSERT INTO tbl_board_file(fno, filename, fileContentType) VALUES(#{fno}, 
+			#{filename}, #{fileContentType}) <selectKey keyProperty="fno" resultType="int" 
+			order="BEFORE"> SELECT board_seq.currval FROM dual </selectKey> -->
+	</insert>
+	<select id="imgcnt" resultType="int" parameterType="String">
+		SELECT
+		count(*)
+		FROM tbl_board_file
+		where filename=#{filename}
+	</select>
+	<select id="read" resultType="boaDTO" parameterType="Integer">
+		SELECT *
+		FROM tbl_board
+		where bno=#{bno}
+	</select>
+	<update id="update" parameterType="boaDTO">
+		UPDATE tbl_board
+		SET
+		title=#{title},
+		content=#{content}
+		WHERE bno=#{bno}
+	</update>
+	<delete id="delete" parameterType="Integer">
+		DELETE FROM tbl_board
+		WHERE
+		bno=#{bno}
+	</delete>
+	<delete id="filedelete" parameterType="Integer">
+		DELETE FROM TBL_BOARD_FILE
+		WHERE
+		fno=#{bno}
+	</delete>
+	<select id="listAll" resultType="boaDTO" parameterType="boaDTO">
+		<![CDATA[
+			SELECT * 
+			FROM tbl_board 
+			WHERE bno>0
+			ORDER BY bno DESC
+		]]>
+	</select>
+	<select id="detail" resultType="boaDTO" parameterType="int">
+		SELECT *
+		FROM TBL_BOARD_FILE,tbl_board
+		where TBL_BOARD_FILE.fno = tbl_board.bno
+		and fno = #{bno}
+	</select>
+	<select id="previous" resultType="boaDTO" parameterType="int">
+		<![CDATA[
+			select * 
+			from tbl_board 
+			where bno=(select max(bno) 
+			from tbl_board 
+			where bno<#{bno})
+		]]>
+	</select>
+	<select id="next" resultType="boaDTO" parameterType="int">
+		<![CDATA[
+			select * 
+			from tbl_board 
+			where bno=(select min(bno) 
+			from tbl_board 
+			where bno>#{bno})
+		]]>
+	</select>
+	<update id="cnt" parameterType="int">
+		update tbl_board
+		set viewcnt = viewcnt+1
+		where bno = #{bno}
+	</update>
+	<select id="listCriteria" resultType="boaDTO">
+		<![CDATA[
+			SELECT *
+			FROM (SELECT ROWNUM RNUM, 
+			             a.*
+				  FROM (SELECT *
+				  		FROM tbl_board
+				  		WHERE bno > 0
+				  		ORDER BY bno DESC) a)
+			WHERE RNUM BETWEEN #{pageStart} AND #{perPageNum}
+		]]>
+	</select>
+	<select id="pagecnt" resultType="Integer" parameterType="int">
+		SELECT
+		CEIL(count(*)/#{perPageNum})
+		FROM tbl_board
+	</select>
+	<select id="totalCnt" resultType="int">
+		select count(*) from
+		tbl_board
+	</select>
+
+	<!-- <select id="search" resultType="boaDTO" parameterType="seaDTO"> 
+		<![CDATA[ 
+			SELECT * 
+			FROM (SELECT ROWNUM RNUM, a.* 
+				  FROM (SELECT * 
+					    FROM tbl_board ,TBL_BOARD_FILE
+            			WHERE bno > 0 
+            			AND tbl_board.bno = TBL_BOARD_FILE.FNO
+		]]>
+				  <include refid="commonSearch"></include> 
+		<![CDATA[ 
+				  ORDER BY bno DESC) a)
+			WHERE RNUM BETWEEN #{pageStart} AND #{perPageNum} 
+			start with mom = 0 
+			connect by prior bno = mom 
+			order siblings by groupNum desc, bno asc 
+		]]>
+		
+		<![CDATA[ 
+			SELECT *
+			FROM (SELECT ROWNUM RNUM, a.*
+			      FROM (SELECT bno,title,content,writer,regdate,viewcnt,groupnum,mom,depth,fno,filedate,filesize,filename,filecontenttype,
+			         ROW_NUMBER() OVER(PARTITION BY bno ORDER BY bno desc) CNT
+			            FROM tbl_board JOIN TBL_BOARD_FILE
+			            ON tbl_board.bno = TBL_BOARD_FILE.fno
+		]]>
+				  <include refid="commonSearch"></include> 
+		<![CDATA[ 
+				  ORDER BY bno DESC) a)
+			WHERE RNUM BETWEEN #{pageStart} AND #{perPageNum} 
+			AND CNT = 1
+			start with mom = 0 
+			connect by prior bno = mom 
+			order siblings by groupNum desc, bno asc 
+		]]>
+	</select> -->
+
+	<!-- <select id="search" resultType="boaDTO" parameterType="seaDTO">
+		SELECT *
+		FROM (SELECT ROWNUM AS rnum, data.*
+		FROM (SELECT LEVEL,
+					 bno,
+					 title,
+					 content,
+					 writer,
+					 regdate,
+					 viewcnt,
+					 groupNum,
+					 mom,
+					 depth
+					 FROM tbl_board
+					 WHERE bno > 0
+					 <include refid="commonSearch"></include>
+		START WITH mom = 0
+		CONNECT BY PRIOR bno = mom
+		ORDER SIBLINGS BY groupNum desc, bno asc) data)
+		WHERE RNUM BETWEEN
+		#{pageStart} AND #{perPageNum}
+	</select> -->
+	
+	<select id="search" resultType="boaDTO" parameterType="seaDTO">
+		SELECT *
+		FROM (SELECT ROWNUM AS rnum, data.*
+		FROM (SELECT bno,
+		             title,
+		             content,
+		             writer,
+		             regdate,
+		             viewcnt,
+		             groupNum,
+		             mom,
+		             depth,
+		             fno,
+		             filedate,
+		             filesize,
+		             filename,
+		             filecontenttype,
+		             ROW_NUMBER() OVER(PARTITION BY bno ORDER BY bno desc) CNT
+		             FROM tbl_board JOIN TBL_BOARD_FILE
+		             ON tbl_board.bno = TBL_BOARD_FILE.fno
+		             ORDER BY bno DESC) data)
+		WHERE RNUM BETWEEN
+		#{pageStart} AND #{perPageNum}
+		AND CNT = 1
+		<include refid="commonSearch"></include>
+		START WITH mom = 0
+		CONNECT BY PRIOR bno = mom
+		ORDER SIBLINGS BY groupNum desc, bno asc
+	</select>
+
+	<select id="searchCnt" resultType="int" parameterType="seaDTO">
+	    <![CDATA[
+	        select count(*) 
+	        from tbl_board
+	        WHERE bno > 0
+        ]]>
+		<include refid="commonSearch"></include>
+	</select>
+
+	<insert id="ripple">
+		INSERT INTO tbl_board(bno, title, content, writer, groupNum, mom, depth)
+		VALUES(board_seq.nextval, #{title}, #{content}, #{writer}, #{groupNum}, #{mom}, #{depth})
+	</insert>
+
+	<select id="login" resultType="memDTO" parameterType="memDTO">
+		SELECT *
+		FROM tbl_board_member
+		WHERE id=#{id}
+		AND pw=#{pw}
+	</select>
+
+	<sql id="commonSearch">
+		<if test="searchType != null">
+			<if test="searchType == 'writer'">
+				AND writer like '%'||#{searchContent}||'%'
+			</if>
+			<if test="searchType == 'content'">
+				AND content like '%'||#{searchContent}||'%'
+			</if>
+			<if test="searchType == 'title'">
+				AND title like '%'||#{searchContent}||'%'
+			</if>
+			<if test="searchType == 'multi'">
+				AND content like '%'||#{searchContent}||'%'
+				OR title like '%'||#{searchContent}||'%'
+			</if>
+		</if>
+		<if test="searchType == null">
+			<if test="searchType == 'option'">
+			</if>
+		</if>
+	</sql>
+
+	<!-- 게시글 이미지 체크 -->
+	<sql id="imgChk">
+		<if test="file != null">
+			INSERT INTO tbl_board(bno, title, content, writer, groupNum, filename)
+			VALUES(board_seq.nextval, #{title}, #{content}, #{writer},
+			groupNum_seq.nextval, #{filename})
+		</if>
+		<if test="file == null">
+			INSERT INTO tbl_board(bno, title, content, writer, groupNum)
+			VALUES(board_seq.nextval, #{title}, #{content}, #{writer},
+			groupNum_seq.nextval)
+		</if>
+	</sql>
+
+</mapper>
